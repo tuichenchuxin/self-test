@@ -2,6 +2,7 @@ package com.example.org.shardingjdbcmetadatatest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.util.Locale;
 
 
 @SpringBootApplication
@@ -23,12 +25,18 @@ public class ShardingJdbcMetaDataTestApplication {
     @Qualifier(value = "shardingSphereDataSource")
     private DataSource dataSource;
     
+    @Value("${spring.profiles.active}")
+    private String env;
+    
     public static void main(String[] args) {
         SpringApplication.run(ShardingJdbcMetaDataTestApplication.class, args);
     }
     
     @GetMapping("/hello")
     public String sql(@RequestParam(value = "sql") String sql) {
+        if (env.equals("h2")) {
+            sql = sql.toUpperCase(Locale.ROOT);
+        }
         StringBuffer stringBuffer1 = new StringBuffer();
         StringBuffer stringBuffer2 = new StringBuffer();
         try {
