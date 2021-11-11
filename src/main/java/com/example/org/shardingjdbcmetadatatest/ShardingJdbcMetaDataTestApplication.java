@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.Locale;
 
 
@@ -33,45 +35,71 @@ public class ShardingJdbcMetaDataTestApplication {
     }
     
     @GetMapping("/hello")
-    public String sql(@RequestParam(value = "sql") String sql) {
+    public String sql(@RequestParam(value = "sql") String sql) throws SQLException {
         if (env.equals("h2")) {
             sql = sql.toUpperCase(Locale.ROOT);
         }
         StringBuffer stringBuffer1 = new StringBuffer();
         StringBuffer stringBuffer2 = new StringBuffer();
-        try {
-            try (
-                    Connection conn = dataSource.getConnection();
-                    PreparedStatement ps = conn.prepareStatement(sql)) {
-                
-                try {
-                    if (sql.toLowerCase().startsWith("select")) {
-                        ResultSet rs = ps.executeQuery();
-                        ResultSetMetaData metaData = rs.getMetaData();
-                        
-                        for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                            String columnName = metaData.getColumnName(i);
-                            stringBuffer1.append("--").append(columnName);
-                        }
-                        while (rs.next()) {
-                            for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                                Object value = rs.getObject(i);
-                                stringBuffer2.append("--").append(value);
-                            }
-                        }
-                        
-                    } else {
-                        ps.execute();
-                    }
-                } finally {
-                
-                }
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql))
+            {
+                simpleExecute(stringBuffer1, stringBuffer2, ps);
+                return stringBuffer1.length() == 0 ? "success" : stringBuffer1.append("\n").append(stringBuffer2).toString();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return e.getMessage();
+    }
+    
+    @GetMapping("/executeByJdbc")
+    public String executeByJdbc(@RequestParam(value = "sql") String sql) throws ClassNotFoundException, SQLException {
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            StringBuffer stringBuffer1 = new StringBuffer();
+            StringBuffer stringBuffer2 = new StringBuffer();
+            simpleExecute(stringBuffer1,stringBuffer2,preparedStatement);
+            return stringBuffer1.length() == 0 ? "success" : stringBuffer1.append("\n").append(stringBuffer2).toString();
         }
-        return stringBuffer1.length() == 0 ? "success" : stringBuffer1.append("\n").append(stringBuffer2).toString();
+    }
+    
+    private void handleQueryResultSet(final StringBuffer stringBuffer1, final StringBuffer stringBuffer2, final ResultSet rs) throws SQLException {
+        ResultSetMetaData metaData = rs.getMetaData();
+        
+        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+            String columnName = metaData.getColumnName(i);
+            stringBuffer1.append("--").append(columnName);
+        }
+        while (rs.next()) {
+            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                Object value = rs.getObject(i);
+                stringBuffer2.append("--").append(value);
+            }
+        }
+    }
+    
+    private void simpleExecute(final StringBuffer stringBuffer1, final StringBuffer stringBuffer2, final PreparedStatement stmt) throws SQLException {
+        boolean hasMoreResultSets = stmt.execute();
+        READING_QUERY_RESULTS :
+        while ( hasMoreResultSets || stmt.getUpdateCount() != -1 ) {
+            if ( hasMoreResultSets ) {
+                ResultSet rs = stmt.getResultSet();
+                handleQueryResultSet(stringBuffer1,stringBuffer2,rs);
+            }
+            else { // if ddl/dml/...
+                int queryResult = stmt.getUpdateCount();
+                if ( queryResult == -1 ) { // no more queries processed
+                    break READING_QUERY_RESULTS;
+                } // no more queries processedq
+                // handle success, failure, generated keys, etc here
+            } // if ddl/dml/...
+        
+            // check to continue in the loop
+            hasMoreResultSets = stmt.getMoreResults();
+        } // while results
+    }
+    
+    public Connection getConnection () throws ClassNotFoundException, SQLException {
+        Class.forName("com.mysql.jdbc.Driver");
+        String url = "jdbc:mysql://localhost:3306/demo_ds_0?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&allowMultiQueries=true";
+        return DriverManager.getConnection(url, "root", "123456");
     }
     
 }
