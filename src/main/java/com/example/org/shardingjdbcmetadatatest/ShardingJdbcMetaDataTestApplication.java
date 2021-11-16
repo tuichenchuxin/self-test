@@ -24,7 +24,7 @@ import java.util.Locale;
 public class ShardingJdbcMetaDataTestApplication {
     
     @Autowired
-    @Qualifier(value = "shardingSphereDataSource")
+    @Qualifier(value = "shardingDataSource")
     private DataSource dataSource;
     
     @Value("${spring.profiles.active}")

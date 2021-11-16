@@ -28,10 +28,16 @@
 			<scope>test</scope>
 		</dependency>
 
+<!--		<dependency>-->
+<!--			<groupId>org.apache.shardingsphere</groupId>-->
+<!--			<artifactId>shardingsphere-jdbc-core-spring-boot-starter</artifactId>-->
+<!--			<version>5.0.1-SNAPSHOT</version>-->
+<!--		</dependency>-->
+
 		<dependency>
 			<groupId>org.apache.shardingsphere</groupId>
-			<artifactId>shardingsphere-jdbc-core-spring-boot-starter</artifactId>
-			<version>5.0.1-SNAPSHOT</version>
+			<artifactId>sharding-jdbc-spring-boot-starter</artifactId>
+			<version>4.1.1</version>
 		</dependency>
 <!--		<dependency>-->
 <!--			<groupId>org.apache.shardingsphere</groupId>-->
