@@ -35,7 +35,7 @@ public class ShardingJdbcMetaDataTestApplication {
     }
     
     @GetMapping("/hello")
-    public String sql(@RequestParam(value = "sql") String sql) throws SQLException {
+    public String sql(@RequestParam(value = "sql") String sql,@RequestParam(value = "param") Object[] params) throws SQLException {
         if (env.equals("h2")) {
             sql = sql.toUpperCase(Locale.ROOT);
         }
@@ -44,18 +44,18 @@ public class ShardingJdbcMetaDataTestApplication {
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql))
             {
-                simpleExecute(stringBuffer1, stringBuffer2, ps);
+                simpleExecute(stringBuffer1, stringBuffer2, ps, params);
                 return stringBuffer1.length() == 0 ? "success" : stringBuffer1.append("\n").append(stringBuffer2).toString();
             }
     }
     
     @GetMapping("/executeByJdbc")
-    public String executeByJdbc(@RequestParam(value = "sql") String sql) throws ClassNotFoundException, SQLException {
+    public String executeByJdbc(@RequestParam(value = "sql") String sql,@RequestParam(value = "param") Object[] params) throws ClassNotFoundException, SQLException {
         try (Connection connection = getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             StringBuffer stringBuffer1 = new StringBuffer();
             StringBuffer stringBuffer2 = new StringBuffer();
-            simpleExecute(stringBuffer1,stringBuffer2,preparedStatement);
+            simpleExecute(stringBuffer1,stringBuffer2,preparedStatement, params);
             return stringBuffer1.length() == 0 ? "success" : stringBuffer1.append("\n").append(stringBuffer2).toString();
         }
     }
@@ -75,7 +75,11 @@ public class ShardingJdbcMetaDataTestApplication {
         }
     }
     
-    private void simpleExecute(final StringBuffer stringBuffer1, final StringBuffer stringBuffer2, final PreparedStatement stmt) throws SQLException {
+    private void simpleExecute(final StringBuffer stringBuffer1, final StringBuffer stringBuffer2, final PreparedStatement stmt, final Object[] params) throws SQLException {
+        for (int i = 0; i<params.length; i++) {
+            stmt.setObject(i+1, params[i]);
+        }
+        
         boolean hasMoreResultSets = stmt.execute();
         READING_QUERY_RESULTS :
         while ( hasMoreResultSets || stmt.getUpdateCount() != -1 ) {
