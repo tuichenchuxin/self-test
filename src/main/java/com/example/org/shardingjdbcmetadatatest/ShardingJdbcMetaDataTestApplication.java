@@ -43,9 +43,7 @@ public class ShardingJdbcMetaDataTestApplication {
         StringBuffer stringBuffer1 = new StringBuffer();
         StringBuffer stringBuffer2 = new StringBuffer();
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(param.getSql());
-             HintManager hintManager = HintManager.getInstance()) {
-            hintManager.setDataSourceName("read-ds-0");
+             PreparedStatement ps = conn.prepareStatement(param.getSql())) {
             simpleExecute(stringBuffer1, stringBuffer2, ps, param.getParams());
             return stringBuffer1.length() == 0 ? "success" : stringBuffer1.append("\n").append(stringBuffer2).toString();
         }
