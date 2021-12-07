@@ -1,5 +1,6 @@
 package com.example.org.shardingjdbcmetadatatest;
 
+import org.apache.shardingsphere.infra.hint.HintManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +43,9 @@ public class ShardingJdbcMetaDataTestApplication {
         StringBuffer stringBuffer1 = new StringBuffer();
         StringBuffer stringBuffer2 = new StringBuffer();
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(param.getSql())) {
+             PreparedStatement ps = conn.prepareStatement(param.getSql());
+             HintManager hintManager = HintManager.getInstance()) {
+            hintManager.setDataSourceName("read-ds-0");
             simpleExecute(stringBuffer1, stringBuffer2, ps, param.getParams());
             return stringBuffer1.length() == 0 ? "success" : stringBuffer1.append("\n").append(stringBuffer2).toString();
         }
