@@ -1,4 +1,4 @@
-package com.example.org.shardingjdbcmetadatatest;
+package com.example.core;
 
 public class Param {
     private String sql;
