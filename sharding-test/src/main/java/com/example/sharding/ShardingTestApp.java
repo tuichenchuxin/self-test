@@ -62,9 +62,9 @@ public class ShardingTestApp {
     }
     
     public Connection getConnection() throws ClassNotFoundException, SQLException {
-        Class.forName("com.mysql.jdbc.Driver");
-        String url = "jdbc:mysql://localhost:3306/demo_ds_0?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&allowMultiQueries=true";
-        return DriverManager.getConnection(url, "root", "123456");
+        Class.forName("org.postgresql.Driver");
+        String url = "jdbc:postgresql://127.0.0.1:5432/demo_ds_0";
+        return DriverManager.getConnection(url, "postgres", "123456");
     }
     
 }
